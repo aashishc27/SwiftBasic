@@ -17,8 +17,12 @@ class MealListTableViewController: UITableViewController {
         super.viewDidLoad()
 
         navigationItem.leftBarButtonItem = editButtonItem
-      addMealImages()
         
+        if let savedMeals = loadMeals() {
+            meals += savedMeals
+        }else{
+      addMealImages()
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -79,7 +83,8 @@ class MealListTableViewController: UITableViewController {
             tableView.deleteRows(at: [indexPath], with: .fade)
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+        }
+        saveMeals()
     }
     
 
@@ -171,6 +176,23 @@ class MealListTableViewController: UITableViewController {
                 meals.append(meal)
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
             }
+            saveMeals()
         }
     }
+    
+    private func saveMeals()
+    {
+        let isSuccessfulSave = NSKeyedArchiver.archiveRootObject(meals, toFile: Meals.ArchiveURL.path)
+        
+        if isSuccessfulSave {
+            os_log("Meals successfully saved.", log: OSLog.default, type: .debug)
+        } else {
+            os_log("Failed to save meals...", log: OSLog.default, type: .error)
+        }
+    }
+    
+    private func loadMeals() -> [Meals]? {
+        return NSKeyedUnarchiver.unarchiveObject(withFile: Meals.ArchiveURL.path) as? [Meals]
+    }
+    
 }
