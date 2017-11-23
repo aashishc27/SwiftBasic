@@ -9,13 +9,18 @@
 import UIKit
 import os.log
 
+import Alamofire
+import Kingfisher
+
 class MealListTableViewController: UITableViewController {
     
     var meals = [Meals]()
+    var movieList = [MovieDetails]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        getAllMovieList()
         navigationItem.leftBarButtonItem = editButtonItem
         
         if let savedMeals = loadMeals() {
@@ -40,28 +45,46 @@ class MealListTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
 
         
-        return meals.count
+        return movieList.count
     }
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
+//        let cellIdentifier = "MealListTableViewCell"
+//
+//        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? MealListTableViewCell  else {
+//            fatalError("The dequeued cell is not an instance of MealListTableViewCell.")
+//        }
+//
+//
+//        let meal = meals[indexPath.row]
+//
+//
+//
+//        cell.mealName.text  = meal.name
+//        cell.mealImage.image = meal.photo
+//        cell.mealRating.rating = meal.rating
+//
+//        return cell
         let cellIdentifier = "MealListTableViewCell"
         
         guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? MealListTableViewCell  else {
             fatalError("The dequeued cell is not an instance of MealListTableViewCell.")
         }
         
-       
-        let meal = meals[indexPath.row]
         
-
-        cell.mealName.text  = meal.name
-        cell.mealImage.image = meal.photo
-        cell.mealRating.rating = meal.rating
+        let movieL = movieList[indexPath.row]
+        
+         if  let moviePoster = movieL.Poster
+           {
+            let url = URL(string: moviePoster)
+            cell.mealImage.kf.setImage(with: url)
+        }
+        cell.mealName.text  = movieL.Title
+        //cell.mealRating.rating = meal.rating
         
         return cell
-        
         
     }
     
@@ -195,4 +218,70 @@ class MealListTableViewController: UITableViewController {
         return NSKeyedUnarchiver.unarchiveObject(withFile: Meals.ArchiveURL.path) as? [Meals]
     }
     
+    //Fetch movie list
+    private func getAllMovieList()
+    {
+        
+        //  http://www.omdbapi.com/?s=all&apikey=2f1f995d
+        let strURL = "http://www.omdbapi.com/"
+        let param = ["s": "all", "apikey": "2f1f995d"]
+        // Alamofire.request(strURL, method: .GET, parameters: param, encoding:.UTF8, headers: nil).responseJSON(completionHandler: <#T##(DataResponse<Any>) -> Void#>)
+        
+        Alamofire.request( URL(string: strURL)!, method: .get, parameters: param) .validate() .responseJSON {
+            (response) -> Void in
+            guard response.result.isSuccess
+                else {
+                    print("Error while fetching remote rooms: \(response.result.error)")
+                    return
+            }
+            print(response.result.value!)
+           // let dict: [String: Any] = ["Search": response.result.value]
+
+            guard let value = response.result.value as? [String: Any] else {
+                print("Malformed data received from fetchAllRooms service")
+                return
+                
+            }
+           
+            // get existing items, or create new array if doesn't exist
+            var existingItems = value["Search"] as? [[String: String]] ?? [[String: String]]()
+            
+            print(existingItems)
+            
+            for i in 0..<existingItems.count
+                {
+                   
+                    
+                    let title = existingItems[i]["Title"] ?? String()
+                    let Poster = existingItems[i]["Poster"] ?? String()
+                    let Type = existingItems[i]["Type"] ?? String()
+                    let Year = existingItems[i]["Year"] ?? String()
+                    let imdbID = existingItems[i]["imdbID"] ?? String()
+                    
+                guard let movies = MovieDetails(Title: title, Poster: Poster, Type: Type, Year: Year, imdbID: imdbID) else
+                {
+                    fatalError("Unable to instantiate meal1")
+
+                    }
+                    
+                    self.movieList += [movies]
+                    
+                    
+
+            }
+            DispatchQueue.main.async{
+                self.tableView.reloadData()
+            }
+
+            
+            //            guard let rows = value["rows"] as? [[String: Any]] else{
+//                print("Malformed data received from fetchAllRooms service")
+//                return
+//
+//            }
+            
+           // print(rows)
+        }
+    
+    }
 }

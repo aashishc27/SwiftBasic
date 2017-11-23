@@ -72,30 +72,9 @@ class MealViewController: UIViewController , UITextFieldDelegate , UIImagePicker
             customStarView.rating = meal.rating
         }
         updateSaveButtonState()
-        getAllMovieList()
     }
     
-    private func getAllMovieList(){
-        //  http://www.omdbapi.com/?s=all&apikey=2f1f995d
-        let strURL = "http://www.omdbapi.com/"
-        let param = ["s": "all", "apikey": "2f1f995d"]
-        // Alamofire.request(strURL, method: .GET, parameters: param, encoding:.UTF8, headers: nil).responseJSON(completionHandler: <#T##(DataResponse<Any>) -> Void#>)
-        
-        Alamofire.request( URL(string: strURL)!, method: .get, parameters: param) .validate() .responseJSON {
-            (response) -> Void in
-            guard response.result.isSuccess
-                else {
-                    print("Error while fetching remote rooms: \(response.result.error)")
-                    return
-            }
-            print(response.result.value!)
-            guard let value = response.result.value as? [String: Any], let rows = value["rows"] as? [[String: Any]] else {
-                print("Malformed data received from fetchAllRooms service")
-                return
-                
-            }
-        }
-    }
+    
     
     
 

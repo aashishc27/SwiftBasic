@@ -10,13 +10,26 @@ import UIKit
 
 class MovieDetails: NSObject {
     
-    var POs
+    var Poster  : String?
+   public var Title   : String
+    var `Type`  : String
+    var Year   : String
+    var imdbID   : String
 
+    init?(Title: String, Poster: String?,`Type`: String,Year: String,imdbID: String) {
+        
+        // The title must not be empty
+        guard !Title.isEmpty else {
+            return nil
+        }
+        
+        // Initialize movies properties.
+        self.Title = Title
+        self.Poster = Poster
+        self.imdbID = imdbID
+        self.Year = Year
+        self.`Type` = `Type`
+        
+    }
 }
-{
-    Poster = "https://images-na.ssl-images-amazon.com/images/M/MV5BY2Y0N2YyOTQtMGNiYy00ZDViLTgxYmItODkxNzlkMWVjNTFkXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg";
-    Title = "She's All That";
-    Type = movie;
-    Year = 1999;
-    imdbID = tt0160862;
-}
+
