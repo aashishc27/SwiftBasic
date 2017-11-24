@@ -19,9 +19,9 @@ class Meals : NSObject,NSCoding {
     
     var name: String
     var photo: UIImage?
-    var rating: Int
+   // var rating: Int
     
-    init?(name: String, photo: UIImage?, rating: Int) {
+    init?(name: String, photo: UIImage?) {
         
         // The name must not be empty
         guard !name.isEmpty else {
@@ -29,14 +29,14 @@ class Meals : NSObject,NSCoding {
         }
         
         // The rating must be between 0 and 5 inclusively
-        guard (rating >= 0) && (rating <= 5) else {
-            return nil
-        }
+//        guard (rating >= 0) && (rating <= 5) else {
+//            return nil
+//        }
         
         // Initialize stored properties.
         self.name = name
         self.photo = photo
-        self.rating = rating
+     //   self.rating = rating
         
     }
     //MARK : Properties
@@ -44,12 +44,12 @@ class Meals : NSObject,NSCoding {
         
         static let name = "name"
         static let photo = "photo"
-        static let rating = "rating"
+       // static let rating = "rating"
     }
     func encode(with aCoder: NSCoder) {
         aCoder.encode(name, forKey: PropertyKey.name)
         aCoder.encode(photo, forKey: PropertyKey.photo)
-        aCoder.encode(rating, forKey: PropertyKey.rating)
+       // aCoder.encode(rating, forKey: PropertyKey.rating)
     }
     
     required convenience init?(coder aDecoder: NSCoder) {
@@ -61,9 +61,9 @@ class Meals : NSObject,NSCoding {
         
         let photo = aDecoder.decodeObject(forKey: PropertyKey.photo) as? UIImage
         
-        let rating = aDecoder.decodeInteger(forKey: PropertyKey.rating)
+        //let rating = aDecoder.decodeInteger(forKey: PropertyKey.rating)
   
-        self.init(name: name, photo: photo, rating: rating)
+        self.init(name: name, photo: photo)
     
     }
     

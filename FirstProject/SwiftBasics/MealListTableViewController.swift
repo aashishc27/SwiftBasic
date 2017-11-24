@@ -69,11 +69,18 @@ class MealListTableViewController: UITableViewController {
 //        return cell
         let cellIdentifier = "MealListTableViewCell"
         
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? MealListTableViewCell  else {
-            fatalError("The dequeued cell is not an instance of MealListTableViewCell.")
+//        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? MealListTableViewCell  else {
+//            fatalError("The dequeued cell is not an instance of MealListTableViewCell.")
+//        }
+        
+        let cell : MealListTableViewCell = {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath)
+            as? MealListTableViewCell else {
+                return MealListTableViewCell(style: UITableViewCellStyle.value1, reuseIdentifier: cellIdentifier)
         }
-        
-        
+            return cell
+        }()
+       
         let movieL = movieList[indexPath.row]
         
          if  let moviePoster = movieL.Poster
@@ -82,6 +89,7 @@ class MealListTableViewController: UITableViewController {
             cell.mealImage.kf.setImage(with: url)
         }
         cell.mealName.text  = movieL.Title
+        cell.movieYear.text = movieL.Year
         //cell.mealRating.rating = meal.rating
         
         return cell
@@ -102,7 +110,7 @@ class MealListTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Delete the row from the data source
-            meals.remove(at: indexPath.row)
+            movieList.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .fade)
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
@@ -151,8 +159,8 @@ class MealListTableViewController: UITableViewController {
                 fatalError("The selected cell is not being displayed by the table")
             }
             
-            let selectedMeal = meals[indexPath.row]
-            mealDetailViewController.meal = selectedMeal
+            let selectedMeal = movieList[indexPath.row]
+            mealDetailViewController.movie = selectedMeal
         default:
             fatalError("Unexpected Segue Identifier; \(segue.identifier ?? "")")
         }
@@ -165,15 +173,15 @@ class MealListTableViewController: UITableViewController {
         let photo2 = UIImage(named: "meal 2")
         let photo3 = UIImage(named: "meal 3")
         
-        guard let meal1 = Meals(name: "Caprese Salad", photo: photo1, rating: 4) else {
+        guard let meal1 = Meals(name: "Caprese Salad", photo: photo1) else {
             fatalError("Unable to instantiate meal1")
         }
         
-        guard let meal2 = Meals(name: "Chicken and Potatoes", photo: photo2, rating: 5) else {
+        guard let meal2 = Meals(name: "Chicken and Potatoes", photo: photo2) else {
             fatalError("Unable to instantiate meal2")
         }
         
-        guard let meal3 = Meals(name: "Pasta with Meatballs", photo: photo3, rating: 3) else {
+        guard let meal3 = Meals(name: "Pasta with Meatballs", photo: photo3) else {
             fatalError("Unable to instantiate meal2")
         }
         

@@ -17,11 +17,13 @@ class MealViewController: UIViewController , UITextFieldDelegate , UIImagePicker
 
     @IBOutlet weak var saveMealButton: UIBarButtonItem!
     @IBOutlet weak var nameTextField: UITextField!
-    @IBOutlet weak var customStarView: CustomStarView!
+  //  @IBOutlet weak var customStarView: CustomStarView!
 
     @IBOutlet weak var photoImageView: UIImageView!
     
     var meal : Meals?
+    
+    var movie : MovieDetails?
     
     
     @IBAction func cancelMealButton(_ sender: Any) {
@@ -65,11 +67,21 @@ class MealViewController: UIViewController , UITextFieldDelegate , UIImagePicker
         
         nameTextField.delegate = self
         
-        if let meal = meal {
-            navigationItem.title = meal.name
-            nameTextField.text   = meal.name
-            photoImageView.image = meal.photo
-            customStarView.rating = meal.rating
+//        if let meal = meal {
+//            navigationItem.title = meal.name
+//            nameTextField.text   = meal.name
+//            photoImageView.image = meal.photo
+//            customStarView.rating = meal.rating
+//        }
+        if let movie = movie {
+            navigationItem.title = movie.Title
+            nameTextField.text   = movie.Title + "\n" + movie.Year
+            if  let moviePoster = movie.Poster
+            {
+                let url = URL(string: moviePoster)
+                photoImageView.kf.setImage(with: url)
+            }
+           // customStarView.rating = meal.rating
         }
         updateSaveButtonState()
     }
@@ -77,25 +89,25 @@ class MealViewController: UIViewController , UITextFieldDelegate , UIImagePicker
     
     
     
-
+// Open image picker
    
     @IBAction func showImagePicker(_ sender: UITapGestureRecognizer) {
-        
-        // HIde Keyboard
-        
-        nameTextField.resignFirstResponder()
-        
-        // UIImagePickerController is a view controller that lets a user pick media from their photo library.
-        let imagePickerController = UIImagePickerController()
-        
-        // Only allow photos to be picked, not taken.
-        imagePickerController.sourceType = .photoLibrary
-        
-        // Make sure ViewController is notified when the user picks an image.
-        imagePickerController.delegate = self
-        present(imagePickerController, animated: true, completion: nil)
+
+//        // HIde Keyboard
+//
+//        nameTextField.resignFirstResponder()
+//
+//        // UIImagePickerController is a view controller that lets a user pick media from their photo library.
+//        let imagePickerController = UIImagePickerController()
+//
+//        // Only allow photos to be picked, not taken.
+//        imagePickerController.sourceType = .photoLibrary
+//
+//        // Make sure ViewController is notified when the user picks an image.
+//        imagePickerController.delegate = self
+//        present(imagePickerController, animated: true, completion: nil)
     }
-    
+
      //MARK: UIImagePickerControllerDelegate
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -130,9 +142,9 @@ class MealViewController: UIViewController , UITextFieldDelegate , UIImagePicker
         
         let name = nameTextField.text ?? ""
         let image = photoImageView.image
-        let rating = customStarView.rating
+        //let rating = customStarView.rating
         
-        meal = Meals(name: name, photo: image, rating: rating)
+        meal = Meals(name: name, photo: image)
     }
     
     private func updateSaveButtonState() {

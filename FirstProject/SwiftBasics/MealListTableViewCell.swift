@@ -12,7 +12,8 @@ class MealListTableViewCell: UITableViewCell {
 
     @IBOutlet weak var mealName: UILabel!
     @IBOutlet weak var mealImage: UIImageView!
-    @IBOutlet weak var mealRating: CustomStarView!
+    @IBOutlet weak var movieYear: UILabel!
+    //  @IBOutlet weak var mealRating: CustomStarView!
     
     
     override func awakeFromNib() {
