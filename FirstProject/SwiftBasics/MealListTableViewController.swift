@@ -12,15 +12,32 @@ import os.log
 import Alamofire
 import Kingfisher
 
-class MealListTableViewController: UITableViewController {
+class MealListTableViewController: UITableViewController  {
     
     var meals = [Meals]()
     var movieList = [MovieDetails]()
-
+    var movieSearchList = [MovieDetails]()
+    let searchController = UISearchController(searchResultsController: nil)
+    var numOfSections: Int = 0
+    var errorMessage : String = ""
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        getAllMovieList()
+        //getAllMovieList(param : "all")
+        
+        
+         getOrders(param : "all") { responseObject, error in
+            guard let value = responseObject  else {
+                print("Malformed data received from fetchAllRooms service")
+                return
+                
+            }
+            
+         self.setValue(value)
+            return
+        }
+        
+        
         navigationItem.leftBarButtonItem = editButtonItem
         
         if let savedMeals = loadMeals() {
@@ -28,6 +45,12 @@ class MealListTableViewController: UITableViewController {
         }else{
       addMealImages()
         }
+        // Setup the Search Controller
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Movies"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
     }
 
     override func didReceiveMemoryWarning() {
@@ -38,16 +61,111 @@ class MealListTableViewController: UITableViewController {
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
-
-        return 1
+//
+        return setSectionValue()
+        
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
 
+        if searchController.isActive && !searchBarIsEmpty() {
+            return movieSearchList.count
+        } else {
+            return movieList.count
+        }
         
-        return movieList.count
     }
-
+    
+    func setSectionValue() -> Int
+    {
+        var numOfSections: Int = 0
+                var movieL: Int = 0
+        
+                if searchController.isActive && !searchBarIsEmpty() {
+                    movieL = movieSearchList.count
+                }
+                else
+                {
+                    movieL = movieList.count
+                }
+        
+                if  movieL > 0
+                {
+                    tableView.separatorStyle = .singleLine
+                    numOfSections            = 1
+                    tableView.backgroundView = nil
+                }
+                else
+                {
+                    let noDataLabel: UILabel     = UILabel(frame: CGRect(x: 0, y: 0, width: tableView.bounds.size.width, height: tableView.bounds.size.height))
+                    noDataLabel.text = errorMessage
+                    noDataLabel.textColor     = UIColor.black
+                    noDataLabel.textAlignment = .center
+                    tableView.backgroundView  = noDataLabel
+                    tableView.separatorStyle  = .none
+                    numOfSections            = 0
+        
+                }
+                return numOfSections
+    }
+    
+   
+    func setValue(_ val : NSDictionary )
+    {
+        guard let value = val as? [String: Any] else {
+            print("Malformed data received from fetchAllRooms service")
+            return
+            
+        }
+        // use responseObject and error here
+        var existingItems = value["Search"] as? [[String: String]] ?? [[String: String]]()
+        let error = value["Error"] as? String ?? String()
+        errorMessage = error
+        print(existingItems)
+        
+        for i in 0..<existingItems.count
+        {
+            
+            
+            let title = existingItems[i]["Title"] ?? String()
+            let Poster = existingItems[i]["Poster"] ?? String()
+            let Type = existingItems[i]["Type"] ?? String()
+            let Year = existingItems[i]["Year"] ?? String()
+            let imdbID = existingItems[i]["imdbID"] ?? String()
+            
+            guard let movies = MovieDetails(Title: title, Poster: Poster, Type: Type, Year: Year, imdbID: imdbID) else
+            {
+                fatalError("Unable to instantiate meal1")
+                
+            }
+            
+            if self.searchController.isActive && !self.searchBarIsEmpty() {
+                self.movieSearchList += [movies]
+            }
+            else{
+                self.movieList += [movies]
+            }
+            
+            
+            
+        }
+        DispatchQueue.main.async{
+            self.tableView.reloadData()
+        }
+    }
+    func searchBarIsEmpty() -> Bool {
+        // Returns true if the text is empty or nil
+        return searchController.searchBar.text?.isEmpty ?? true
+    }
+    
+    func filterContentForSearchText(_ searchText: String, scope: String = "All") {
+        
+        movieSearchList = movieList.filter({( movie : MovieDetails) -> Bool in
+            return movie.Title.lowercased().contains(searchText.lowercased())
+        })
+        
+        tableView.reloadData()
+    }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
@@ -72,16 +190,31 @@ class MealListTableViewController: UITableViewController {
 //        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? MealListTableViewCell  else {
 //            fatalError("The dequeued cell is not an instance of MealListTableViewCell.")
 //        }
-        
+//        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier) as! MealListTableViewCell
+//
+//        var arrayOfSpecies:[MovieDetails]
+//        if searchController.isActive && !searchBarIsEmpty() {
+//            arrayOfSpecies = movieSearchList
+//        } else {
+//            arrayOfSpecies = movieList
+//        }
         let cell : MealListTableViewCell = {
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath)
+            guard let cellList = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath)
             as? MealListTableViewCell else {
                 return MealListTableViewCell(style: UITableViewCellStyle.value1, reuseIdentifier: cellIdentifier)
         }
-            return cell
+            return cellList
         }()
-       
-        let movieL = movieList[indexPath.row]
+
+        let movieL : MovieDetails
+        
+        if searchController.isActive && !searchBarIsEmpty() {
+             movieL = movieSearchList[indexPath.row]
+        }
+        else
+        {
+         movieL = movieList[indexPath.row]
+        }
         
          if  let moviePoster = movieL.Poster
            {
@@ -110,7 +243,14 @@ class MealListTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Delete the row from the data source
-            movieList.remove(at: indexPath.row)
+            if searchController.isActive && !searchBarIsEmpty() {
+                movieSearchList.remove(at: indexPath.row)
+
+            }
+            else{
+                movieList.remove(at: indexPath.row)
+
+            }
             tableView.deleteRows(at: [indexPath], with: .fade)
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
@@ -158,8 +298,16 @@ class MealListTableViewController: UITableViewController {
             guard let indexPath = tableView.indexPath(for: selectedMealCell) else {
                 fatalError("The selected cell is not being displayed by the table")
             }
+            let selectedMeal : MovieDetails
             
-            let selectedMeal = movieList[indexPath.row]
+            if searchController.isActive && !searchBarIsEmpty() {
+                selectedMeal = movieSearchList[indexPath.row]
+            }
+            else
+            {
+                selectedMeal = movieList[indexPath.row]
+            }
+            
             mealDetailViewController.movie = selectedMeal
         default:
             fatalError("Unexpected Segue Identifier; \(segue.identifier ?? "")")
@@ -226,15 +374,17 @@ class MealListTableViewController: UITableViewController {
         return NSKeyedUnarchiver.unarchiveObject(withFile: Meals.ArchiveURL.path) as? [Meals]
     }
     
+    
+    
     //Fetch movie list
-    private func getAllMovieList()
+    private func getAllMovieList(param : String)
     {
         
         //  http://www.omdbapi.com/?s=all&apikey=2f1f995d
         let strURL = "http://www.omdbapi.com/"
-        let param = ["s": "all", "apikey": "2f1f995d"]
+        let param = ["s": param, "apikey": "2f1f995d"]
         // Alamofire.request(strURL, method: .GET, parameters: param, encoding:.UTF8, headers: nil).responseJSON(completionHandler: <#T##(DataResponse<Any>) -> Void#>)
-        
+       
         Alamofire.request( URL(string: strURL)!, method: .get, parameters: param) .validate() .responseJSON {
             (response) -> Void in
             guard response.result.isSuccess
@@ -271,8 +421,13 @@ class MealListTableViewController: UITableViewController {
                     fatalError("Unable to instantiate meal1")
 
                     }
-                    
-                    self.movieList += [movies]
+
+                    if self.searchController.isActive && !self.searchBarIsEmpty() {
+                        self.movieSearchList += [movies]
+                    }
+                    else{
+                        self.movieList += [movies]
+                    }
                     
                     
 
@@ -293,3 +448,39 @@ class MealListTableViewController: UITableViewController {
     
     }
 }
+func getOrders(param : String,completionHandler: @escaping (NSDictionary?, Error?) -> ()) {
+    makeCall(param, completionHandler: completionHandler)
+}
+func makeCall(_ section: String, completionHandler: @escaping (NSDictionary?, Error?) -> ()) {
+    let params = ["s": section, "apikey": "2f1f995d"]
+    let strURL = "http://www.omdbapi.com/"
+    Alamofire.request(strURL, parameters: params)
+        .responseJSON { response in
+            switch response.result {
+            case .success(let value):
+                completionHandler(value as? NSDictionary, nil)
+            case .failure(let error):
+                completionHandler(nil, error)
+            }
+    }
+}
+
+extension MealListTableViewController: UISearchResultsUpdating {
+    // MARK: - UISearchResultsUpdating Delegate
+    func updateSearchResults(for searchController: UISearchController) {
+        // TODO
+        filterContentForSearchText(searchController.searchBar.text!)
+        getOrders(param : searchController.searchBar.text!) { responseObject, error in
+            guard let value = responseObject  else {
+                print("Malformed data received from fetchAllRooms service")
+                return
+                
+            }
+            
+            self.setValue(value)
+            return
+        }
+    }
+}
+
+
